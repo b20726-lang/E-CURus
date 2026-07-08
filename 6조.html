@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Curus 이화여고 스마트 헬스케어</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    
+    <style>
+        /* 사용자 정의 통합 폰트 연동 */
+        @font-face {
+            font-family: 'EwhaCustomFont';
+            src: url('./custom_font.ttf') format('truetype'); 
+            font-weight: normal; font-style: normal;
+        }
+
+        :root {
+            /* 🎨 세련된 이화 컬러 팔레트 */
+            --ewha-green: #00462A;
+            --ewha-mint: #007d4f;
+            --ewha-pastel: #eaf4ef;
+            --ewha-bg: #f2f8f5;
+            --ewha-gradient: linear-gradient(135deg, #00462A 0%, #007d4f 100%);
+            --ewha-gloss: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 100%);
+            --soft-shadow: 0 10px 25px rgba(0, 70, 42, 0.08);
+        }
+        
+        body { background-color: var(--ewha-bg); font-family: 'EwhaCustomFont', sans-serif; overflow-x: hidden; color: #2c3e50; }
+        
+        /* ☁️ 둥글둥글하고 푹신한 카드 스타일 */
+        .card { 
+            border-radius: 25px; 
+            box-shadow: var(--soft-shadow); 
+            border: 1px solid rgba(255,255,255,0.8); 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        
+        /* 🎨 광택이 흐르는 세련된 그라데이션 사이드바 */
+        .sidebar { 
+            min-height: 100vh; width: 270px; 
+            background: var(--ewha-gradient); 
+            color: white; position: fixed; z-index: 1000;
+            border-top-right-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; 
+        }
+        .sidebar h4 { padding: 25px 20px; border-bottom: 1px solid rgba(255,255,255,0.15); margin: 0; font-weight: bold; letter-spacing: 1px;}
+        .sidebar-user { padding: 15px 20px; background: rgba(0,0,0,0.15); font-size: 0.9rem; margin-bottom: 10px;}
+        .sidebar a.menu-link { 
+            color: #d1ebd9; text-decoration: none; display: block; padding: 14px 20px; 
+            font-weight: 500; border-left: 5px solid transparent; 
+            border-radius: 0 20px 20px 0; margin-right: 15px; transition: all 0.3s ease;
+        }
+        .sidebar a.menu-link:hover, .sidebar a.menu-link.active { 
+            background-color: rgba(255,255,255,0.15); 
+            color: white; border-left: 5px solid #fff; 
+        }
+        
+        .main-content { margin-left: 270px; padding: 40px; min-height: 100vh; width: calc(100% - 270px);}
+        .content-section { display: none; animation: fadeIn 0.4s ease; }
+        .content-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 🔘 둥글둥글 입력창 및 셀렉트 박스 */
+        .form-control, .form-select, .input-group-text {
+            border-radius: 18px !important;
+            border: 1px solid #dce8e1;
+            padding: 10px 15px;
+            background-color: #f9fdfa;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 4px rgba(0, 125, 79, 0.15);
+            border-color: var(--ewha-mint);
+        }
+        
+        /* ✨ 광택이 나는 입체적인 젤리 버튼 */
+        .btn-primary { 
+            background: var(--ewha-gradient); 
+            border: none; 
+            border-radius: 30px; 
+            font-weight: 700;
+            box-shadow: 0 6px 15px rgba(0, 70, 42, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary::after { 
+            content: ''; position: absolute; top:0; left:0; right:0; height: 40%;
+            background: var(--ewha-gloss); border-radius: 30px 30px 0 0;
+        }
+        .btn-primary:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 70, 42, 0.4);
+            background: linear-gradient(135deg, #003620 0%, #006640 100%);
+        }
+        
+        .btn-outline-success { border-radius: 20px; font-weight: bold; border-color: var(--ewha-mint); color: var(--ewha-mint); }
+        .btn-outline-success:hover, .btn-outline-success.active { background: var(--ewha-gradient); border-color: transparent; color: white;}
+
+        /* 지도 둥근 모서리 및 그림자 */
+        .map-box { 
+            width: 100%; height: 500px; background-color: #fff; background-image: url('ewha.png'); 
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            border: 2px dashed #b5d5c5; border-radius: 25px; position: relative; overflow: hidden; cursor: crosshair; 
+        }
+        .floor-map-box {
+            width: 100%; height: 420px; background-color: #f8fbf9; background-size: contain; 
+            background-repeat: no-repeat; background-position: center; border: 2px solid #dce8e1; 
+            border-radius: 25px; position: relative; overflow: hidden; cursor: crosshair;
+        }
+        
+        /* 🏫 화암 신봉조관 귀여운 이모티콘 핫스팟 */
+        .school-icon-btn {
+            position: absolute; cursor: pointer; z-index: 20;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; width: 55px; height: 55px;
+            background: white; border: 3px solid var(--ewha-mint);
+            border-radius: 50%; box-shadow: 0 6px 15px rgba(0,70,42,0.25);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            top: 48%; left: 48%; transform: translate(-50%, -50%);
+        }
+        .school-icon-btn:hover {
+            transform: translate(-50%, -50%) scale(1.2);
+            background-color: var(--ewha-pastel);
+        }
+        
+        .danger-spot { width: 30px; height: 30px; border-radius: 50%; position: absolute; cursor: pointer; animation: blink 1.2s infinite; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold; transform: translate(-50%, -50%); z-index: 10; box-shadow: 0 4px 8px rgba(0,0,0,0.2);}
+        @keyframes blink { 0% { box-shadow: 0 0 0 0 rgba(255,0,0,0.5); } 70% { box-shadow: 0 0 0 12px rgba(255,0,0,0); } 100% { box-shadow: 0 0 0 0 rgba(255,0,0,0); } }
+        
+        /* 💊 예쁘고 둥글둥글한 증상별 약상자 카드 */
+        .med-category-card { 
+            background: white; border-radius: 25px; height: 100%; 
+            box-shadow: var(--soft-shadow);
+            border: none; position: relative; overflow: hidden;
+        }
+        .med-category-card::before {
+            content: ''; position: absolute; top:0; left:0; right:0; height: 8px; background: var(--ewha-gradient);
+        }
+        .med-item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px dashed #e9f0ec; font-size: 0.95rem; font-weight: 500;}
+        .med-item-row:last-child { border-bottom: none; }
+        
+        /* 💬 시크릿 챗봇 말풍선 디자인 */
+        .chat-box { height: 420px; overflow-y: auto; background: #f0f7f4; border: none; border-radius: 25px; padding: 20px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.02);}
+        .msg { margin-bottom: 15px; padding: 14px 20px; border-radius: 20px; max-width: 80%; width: fit-content; line-height: 1.6; font-size: 0.95rem; box-shadow: 0 3px 8px rgba(0,0,0,0.05);}
+        .msg.bot { background-color: white; color: #2c3e50; align-self: flex-start; border-top-left-radius: 4px; }
+        .msg.user { background: var(--ewha-gradient); color: white; margin-left: auto; align-self: flex-end; border-top-right-radius: 4px;}
+        
+        .text-primary { color: var(--ewha-mint) !important; }
+        .progress { height: 28px; border-radius: 15px; overflow: hidden; background-color: #e2ede7; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        .badge { border-radius: 12px; padding: 6px 10px; font-weight: 600; }
+        
+        h2.fw-bold { font-weight: 800 !important; color: #1e3528; letter-spacing: -0.5px;}
+        h5.fw-bold { font-weight: 700 !important; color: #2a4d3a; }
+    </style>
+</head>
+<body>
+
+<div id="authContainer" class="container justify-content-center align-items-center flex-column" style="min-height: 100vh; display: flex;">
+    
+    <div id="loginCard" class="card p-5 mb-4" style="width: 440px; animation: fadeIn 0.5s;">
+        <h2 class="text-center mb-2 text-primary d-flex justify-content-center align-items-center" style="font-weight: 900; letter-spacing: -1px;">
+            <img src="ewha_logo.png" alt="이화 로고" style="height: 40px; margin-right: 10px; border-radius: 50%;" onerror="this.style.display='none'">
+            E-Curus
+        </h2>
+        <p class="text-center text-muted small mb-4">이화여고 AI 스마트 학교 보건실 플랫폼</p>
+        <div class="mb-3"><input type="text" id="loginId" class="form-control form-control-lg" placeholder="아이디를 입력하세요"></div>
+        <div class="mb-4"><input type="password" id="loginPw" class="form-control form-control-lg" placeholder="비밀번호" onkeypress="if(event.keyCode==13) handleLogin()"></div>
+        <button class="btn btn-primary btn-lg w-100 py-3 mb-3" onclick="handleLogin()">로그인 시작하기</button>
+        <p class="text-center mb-0 small mt-2">계정이 없으신가요? <a href="#" onclick="toggleAuthCard(false)" style="color: var(--ewha-mint); font-weight: 700; text-decoration: none;">회원가입</a></p>
+    </div>
+
+    <div id="signupCard" class="card p-5 mb-4" style="width: 500px; display: none; max-height: 90vh; overflow-y: auto; animation: fadeIn 0.5s;">
+        <h3 class="text-center mb-4 text-primary d-flex justify-content-center align-items-center" style="font-weight: 800;">
+            <img src="ewha_logo.png" alt="로고" style="height: 35px; margin-right: 8px; border-radius: 50%;" onerror="this.style.display='none'">
+            E-Curus 회원가입
+        </h3>
+        
+        <h6 class="border-bottom pb-2 fw-bold text-dark"><i class="bi bi-person-badge me-2"></i>기본 계정 정보</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><input type="text" id="regId" class="form-control" placeholder="아이디"></div>
+            <div class="col-md-6"><input type="password" id="regPw" class="form-control" placeholder="비밀번호"></div>
+            <div class="col-md-6"><input type="text" id="regName" class="form-control" placeholder="이름 (실명)"></div>
+            <div class="col-md-6">
+                <select id="regRole" class="form-select">
+                    <option value="student">학생</option>
+                    <option value="admin">보건선생님 (관리자)</option>
+                </select>
+            </div>
+        </div>
+
+        <h6 class="border-bottom pb-2 fw-bold text-dark"><i class="bi bi-clipboard2-pulse me-2"></i>건강 및 인적 사항</h6>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><input type="number" id="regGrade" class="form-control" placeholder="학년 (예: 2)"></div>
+            <div class="col-md-6"><input type="number" id="regClassNum" class="form-control" placeholder="반 (예: 3)"></div>
+            <div class="col-md-6"><input type="number" id="regHeight" class="form-control" placeholder="키(cm)"></div>
+            <div class="col-md-6"><input type="number" id="regWeight" class="form-control" placeholder="몸무게(kg)"></div>
+            <div class="col-md-6">
+                <select id="regBlood" class="form-select">
+                    <option value="A형">A형</option><option value="B형">B형</option><option value="O형">O형</option><option value="AB형">AB형</option>
+                </select>
+            </div>
+            <div class="col-md-6"><input type="text" id="regAllergy" class="form-control" placeholder="알레르기 (예: 땅콩, 없음)"></div>
+        </div>
+        
+        <button class="btn btn-primary btn-lg w-100 py-3 mt-2" onclick="handleSignup()">가입 완료하기</button>
+        <p class="text-center mb-0 small mt-4">이미 계정이 있으신가요? <a href="#" onclick="toggleAuthCard(true)" style="color: var(--ewha-mint); font-weight: 700; text-decoration: none;">로그인으로 돌아가기</a></p>
+    </div>
+</div>
+
+<div id="appContainer" class="d-flex" style="display: none !important;">
+    
+    <div class="sidebar d-flex flex-column">
+        <h4 class="d-flex align-items-center pb-3 mb-0 border-bottom" style="border-color: rgba(255,255,255,0.15) !important;">
+            <img src="ewha_logo.png" alt="이화 로고" style="height: 32px; margin-right: 10px; border-radius: 50%; background: #fff;" onerror="this.style.display='none'">
+            E-Curus
+        </h4>
+        <div class="sidebar-user">
+            <i class="bi bi-person-circle me-1"></i> <strong id="userBadgeName">-.</strong> 
+            <span class="badge bg-light text-dark ms-1 rounded-pill" id="userBadgeRole">-</span>
+        </div>
+        
+        <div id="studentMenu" class="flex-grow-1">
+            <a href="#" class="menu-link active" onclick="switchSection('sec-diagnosis', this)"><i class="bi bi-clipboard2-pulse me-2"></i>건강 자가진단</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-history', this)"><i class="bi bi-graph-up-arrow me-2"></i>과거 진단 & 분석 리포트</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-map', this)"><i class="bi bi-map me-2"></i>교내 질병/안전 지도</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-chatbot', this)"><i class="bi bi-chat-heart me-2"></i>시크릿 카운셀러 챗봇</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-inventory', this)"><i class="bi bi-capsule me-2"></i>보건실 비치 약품 현황</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-profile', this)"><i class="bi bi-person-gear me-2"></i>내 신체정보 수정</a>
+        </div>
+        
+        <div id="adminMenu" class="flex-grow-1" style="display: none;">
+            <a href="#" class="menu-link active" onclick="switchSection('sec-admin-dash', this)"><i class="bi bi-speedometer2 me-2"></i>실시간 접수 & 지도 관리</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-map', this)"><i class="bi bi-map me-2"></i>교내 질병/안전 지도</a>
+            <a href="#" class="menu-link" onclick="switchSection('sec-admin-inventory', this)"><i class="bi bi-box-seam me-2"></i>약품 입출고 재고 관리</a>
+        </div>
+        
+        <div class="mt-auto p-4 border-top" style="border-color: rgba(255,255,255,0.15) !important;">
+            <button class="btn btn-light w-100 rounded-pill fw-bold shadow-sm d-flex align-items-center justify-content-center" style="color: var(--ewha-green); padding: 12px;" onclick="handleLogout()">
+                <i class="bi bi-box-arrow-left me-2 fs-5"></i> 로그아웃
+            </button>
+        </div>
+    </div>
+
+    <div class="main-content flex-grow-1">
+        
+        <div id="sec-diagnosis" class="content-section active">
+            <h2 class="fw-bold mb-4">🩺 스마트 실시간 건강 자가진단</h2>
+            <div class="card p-5 col-lg-10">
+                <form id="healthForm" onsubmit="event.preventDefault();">
+                    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-moon-stars-fill me-2 text-primary"></i>1. 어젯밤 수면 기록</h5>
+                    <div class="input-group mb-4" style="max-width: 420px;">
+                        <span class="input-group-text fw-bold">취침</span>
+                        <input type="time" class="form-control" id="diagSleepStart" value="23:30">
+                        <span class="input-group-text fw-bold">기상</span>
+                        <input type="time" class="form-control" id="diagSleepEnd" value="06:30">
+                    </div>
+
+                    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-egg-fried me-2 text-warning"></i>2. 금일 끼니 상태 체크</h5>
+                    <div class="d-flex flex-wrap gap-3 mb-4 bg-light p-4 rounded-4 border-0">
+                        <div class="form-check"><input class="form-check-input meal-cb" type="checkbox" id="meal-break" checked><label class="form-check-label fw-bold" for="meal-break">아침 식사 완료</label></div>
+                        <div class="form-check"><input class="form-check-input meal-cb" type="checkbox" id="meal-lunch" checked><label class="form-check-label fw-bold" for="meal-lunch">점심 급식 완료</label></div>
+                        <div class="form-check"><input class="form-check-input meal-cb" type="checkbox" id="meal-dinner"><label class="form-check-label fw-bold" for="meal-dinner">저녁 식사</label></div>
+                        <div class="form-check"><input class="form-check-input meal-cb" type="checkbox" id="meal-snack"><label class="form-check-label text-danger fw-bold" for="meal-snack">과도한 야식</label></div>
+                    </div>
+                    
+                    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-heart-pulse-fill me-2 text-danger"></i>3. 현재 자각 증상 (선택 시 맞춤약 자동 추천)</h5>
+                    <div class="mb-4 d-flex flex-wrap gap-3 p-4 bg-white border rounded-4 shadow-sm">
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="두통" id="sym1"><label class="form-check-label fw-bold" for="sym1">두통 / 편두통</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="복통/소화불량" id="sym2"><label class="form-check-label fw-bold" for="sym2">복통 / 체함 / 속쓰림</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="발열/오한" id="sym3"><label class="form-check-label fw-bold" for="sym3">발열 및 오한 몸살</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="근육통/관절통" id="sym4"><label class="form-check-label fw-bold" for="sym4">근육통 / 발목 접지름</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="어지러움" id="sym5"><label class="form-check-label fw-bold" for="sym5">어지러움 / 빈혈</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="생리통" id="sym6"><label class="form-check-label fw-bold" for="sym6">생리통 통증</label></div>
+                        <div class="form-check"><input class="form-check-input diag-symptom" type="checkbox" value="인후통/기침" id="sym7"><label class="form-check-label fw-bold" for="sym7">기침 / 콧물 / 목통증</label></div>
+                        
+                        <div class="form-check d-flex align-items-center gap-2">
+                            <input class="form-check-input" type="checkbox" id="sym-other" onchange="document.getElementById('sym-other-text').style.display = this.checked ? 'block' : 'none'; handleSymptomLogic(false);">
+                            <label class="form-check-label fw-bold" for="sym-other">기타</label>
+                            <input type="text" id="sym-other-text" class="form-control form-control-sm" style="display:none; width: 180px;" placeholder="어디가 아프신가요?">
+                        </div>
+                        <div class="w-100 border-top my-2"></div>
+                        <div class="form-check"><input class="form-check-input" type="checkbox" id="sym-none" onchange="handleSymptomLogic(true)"><label class="form-check-label text-success fw-bold" for="sym-none"><i class="bi bi-emoji-smile-fill me-1"></i>해당사항 없음 (완전 건강)</label></div>
+                    </div>
+
+                    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-cup-hot-fill me-2" style="color: #6f4e37;"></i>4. 고카페인 음료 복용</h5>
+                    <div class="mb-4 bg-light p-4 rounded-4 border-0">
+                        <div class="input-group mb-2" style="max-width: 500px;">
+                            <select id="caffeineType" class="form-select fw-bold">
+                                <option value="에너지드링크">에너지드링크 (몬스터/핫식스)</option>
+                                <option value="고농축 커피">캔커피 / 아메리카노</option>
+                            </select>
+                            <input type="number" id="caffeineCount" class="form-control fw-bold" value="1" min="1" style="max-width: 80px;">
+                            <button type="button" class="btn btn-secondary px-4 fw-bold" style="border-radius: 18px;" onclick="addCaffeineRow()">추가</button>
+                        </div>
+                        <div id="caffeineBadgesContainer" class="d-flex flex-wrap gap-2 mt-2"></div>
+                    </div>
+
+                    <h5 class="fw-bold border-bottom pb-2 mb-3"><i class="bi bi-calendar-heart-fill me-2 text-danger"></i>5. 여성 건강 기록 (생리 주기 달력)</h5>
+                    <div class="mb-5 bg-light p-4 rounded-4 border-0">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="isPeriodActive" onchange="document.getElementById('periodDates').style.display = this.checked ? 'flex' : 'none';">
+                            <label class="form-check-label fw-bold text-danger" for="isPeriodActive">최근 한 달 이내 생리 이력이 있거나 현재 진행 중입니다.</label>
+                        </div>
+                        <div class="row g-2 align-items-center mt-2" id="periodDates" style="display:none;">
+                            <div class="col-md-5">
+                                <label class="small text-muted mb-1 fw-bold">생리 시작일</label>
+                                <input type="date" class="form-control" id="periodStartDate" value="2026-07-01">
+                            </div>
+                            <div class="col-md-2 text-center text-muted pt-4">~</div>
+                            <div class="col-md-5">
+                                <label class="small text-muted mb-1 fw-bold">생리 종료일</label>
+                                <input type="date" class="form-control" id="periodEndDate">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary w-100 btn-lg py-3 fs-5" onclick="processDiagnosis()"><i class="bi bi-stars me-2"></i>이화 AI 실시간 종합 자가진단 가동</button>
+                </form>
+
+                <div id="diagnosisResultBox" class="mt-5" style="display: none; animation: fadeIn 0.5s;">
+                    <div class="alert p-4 border-0" id="mainAlertBox" style="border-radius: 25px; background-color: var(--ewha-pastel); box-shadow: 0 5px 15px rgba(0,0,0,0.05);">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="fw-bold mb-0 text-dark"><i class="bi bi-clipboard-data-fill me-2 text-primary"></i>AI 종합 진단 분석 레포트</h4>
+                            <button class="btn btn-dark fw-bold rounded-pill px-4" id="sendAdminBtn" onclick="sendToAdminDashboard()"><i class="bi bi-send-fill me-2"></i>보건실 원격 접수</button>
+                        </div>
+                        <div class="bg-white p-4 rounded-4 shadow-sm mb-3">
+                            <p class="mb-2 fw-bold text-secondary">📉 종합 피로도 및 스트레스 지수</p>
+                            <div class="progress mb-3">
+                                <div id="stressProgressBar" class="progress-bar progress-bar-striped progress-bar-animated fw-bold fs-6" role="progressbar" style="width: 0%;">0%</div>
+                            </div>
+                            <span id="resStress" style="display:none;">0</span>
+                            <div class="d-flex justify-content-between align-items-end mt-2">
+                                <div>
+                                    <p class="mb-1 text-muted small">AI 신체 심각도 판정</p>
+                                    <span id="resSeverity" class="badge fs-6">계산 중</span>
+                                </div>
+                                <div class="text-end">
+                                    <p class="mb-1 text-muted small">행동 지침 가이드</p>
+                                    <span class="fw-bold fs-5 text-danger" id="resAction">대기</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-4 shadow-sm border-start border-5 border-success">
+                            <h6 class="fw-bold text-success mb-3"><i class="bi bi-lightbulb-fill me-2"></i>E-Curus AI 예방 솔루션 및 처방 약품</h6>
+                            <ul class="mb-0 text-dark" id="detailedReportList" style="line-height: 1.9; font-weight: 500;"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-history" class="content-section">
+            <h2 class="fw-bold mb-4">📊 과거 건강 점검 히스토리 및 분석</h2>
+            <div class="card p-4 bg-white"><div class="table-responsive"><table class="table table-hover align-middle text-center border-top"><thead><tr class="table-light"><th>점검 일시</th><th>피로/스트레스 점수</th><th>AI 심각도 판정</th><th>당시 호소 증상</th></tr></thead><tbody id="historyTableBody"></tbody></table></div></div>
+        </div>
+
+        <div id="sec-inventory" class="content-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold m-0">💊 증상별 모아보는 보건실 약장 현황</h2>
+                <div class="card px-4 py-2 text-white shadow-sm d-flex flex-row align-items-center gap-3 rounded-pill border-0" style="background: var(--ewha-gradient);" id="userCongestionBox">
+                    </div>
+            </div>
+            <div class="row g-4" id="studentMedGridContainer"></div>
+        </div>
+
+        <div id="sec-chatbot" class="content-section">
+            <h2 class="fw-bold mb-2">💬 시크릿 카운셀러 무명 대화방</h2>
+            <p class="text-muted"><i class="bi bi-shield-lock-fill text-danger me-1"></i>상담 내용은 실시간 휘발 처리되므로 안심하고 성(性) 지식, 올바른 피임, 생리 지연 등을 털어놓으세요.</p>
+            <div class="card p-4 col-lg-9 bg-white">
+                <div class="chat-box d-flex flex-column" id="chatBox">
+                    <div class="msg bot">반갑습니다. 이화여고 시크릿 인공지능 보건상담방입니다. 남들에게 말하기 창피했던 피임 수단, 사후피임약 부작용, 극단적 체중감량, 생리 미뤄짐 주기 예측 등을 정밀 카운셀링해 드립니다. 🌸</div>
+                </div>
+                <div class="input-group mt-4 shadow-sm rounded-pill overflow-hidden">
+                    <input type="text" id="chatInput" class="form-control py-3 border-0 ps-4" style="background:#f9fdfa;" placeholder="질문을 입력하세요... (예: 생리가 안 나와요)" onkeypress="if(event.keyCode==13) sendChatMessage()">
+                    <button class="btn btn-primary px-4 fw-bold rounded-0" onclick="sendChatMessage()"><i class="bi bi-cursor-fill me-1"></i>상담하기</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-map" class="content-section">
+            <h2 class="fw-bold mb-1">🗺️ 교내 전염성 질병 확산 및 실시간 안전사고 맵</h2>
+            <p class="text-muted">지도 내의 <strong>[화암 신봉조관 위 🏫 학교 이모티콘]</strong>을 원클릭하시면 우측에 각 층별 정밀 전개도 도면 창이 활성화됩니다.</p>
+            <div class="row mt-4">
+                <div class="col-lg-6 mb-4">
+                    <div class="card p-4 h-100 bg-white">
+                        <h5 class="fw-bold text-primary mb-3"><i class="bi bi-pin-map-fill me-2"></i>이화여고 전체 캠퍼스 종합 지도</h5>
+                        <div class="map-box" id="schoolMap" onclick="handleMapClick(event)">
+                            <div class="school-icon-btn" onclick="openBuildingDetails('화암 신봉조관', event)">🏫</div>
+                            <div id="mapMarkersContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6 mb-4" id="buildingDetailContainer" style="display: none; animation: fadeIn 0.4s;">
+                    <div class="card p-4 h-100 bg-white">
+                        <h5 class="fw-bold text-success mb-2">🏢 <span id="selectedBuildingName">건물</span> 각 층별 2D 정밀 도면</h5>
+                        <p class="small text-muted mb-3">도면 특정 지점을 터치하여 위기 제보 마커를 생성해 보세요.</p>
+                        
+                        <div class="d-flex gap-3">
+                            <div class="btn-group-vertical shadow-sm rounded-4 overflow-hidden" role="group" style="min-width: 85px;">
+                                <button type="button" class="btn btn-outline-success py-3" id="btn-fl-2" onclick="selectFloor(2)">2층</button>
+                                <button type="button" class="btn btn-outline-success active py-3" id="btn-fl-3" onclick="selectFloor(3)">3층</button>
+                                <button type="button" class="btn btn-outline-success py-3" id="btn-fl-4" onclick="selectFloor(4)">4층</button>
+                                <button type="button" class="btn btn-outline-success py-3" id="btn-fl-5" onclick="selectFloor(5)">5층</button>
+                                <button type="button" class="btn btn-outline-success py-3" id="btn-fl-6" onclick="selectFloor(6)">6층</button>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="floor-map-box shadow-sm" id="floorMapBox" onclick="handleFloorMapClick(event)">
+                                    <div id="floorMarkersContainer"></div>
+                                    <div class="text-center w-100 pt-5 text-secondary position-absolute top-50 start-50 translate-middle" id="floorMapPlaceholder" style="pointer-events:none; display:none;">
+                                        <i class="bi bi-file-earmark-x-fill display-4 d-block text-danger mb-2"></i><span class="fw-bold text-dark fs-5">도면 파일 누락</span><br>
+                                        <span class="small text-muted">폴더 내에 <strong id="placeholderFloorText">3</strong>층 사진 파일이 필요합니다.</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="mapDetailBox" class="alert alert-dark mt-2 shadow-sm rounded-4 border-0" style="display:none;"><h5>📍 제보 지점 학교 종합 보건 역학조사 보고</h5><p id="mapDetailText" class="mb-0"></p></div>
+        </div>
+
+        <div id="sec-admin-dash" class="content-section">
+            <h2 class="fw-bold mb-4">👨‍⚕️ 보건실 원격 모니터 및 관리 대시보드</h2>
+            
+            <div class="row mb-4">
+                <div class="col-md-5">
+                    <div class="card p-4 bg-white">
+                        <label class="fw-bold fs-5 mb-2"><i class="bi bi-activity text-danger me-2"></i>보건실 혼잡 상태 수동 제어</label>
+                        <select id="adminCongestionSelect" class="form-select form-select-lg fw-bold" onchange="changeCongestion(this.value)">
+                            <option value="🟢 여유 (즉시 이용 가능)">🟢 여유 (대기 없음)</option>
+                            <option value="🟡 보통 (잔여 침상 소량)">🟡 보통 (침상 1개 남음)</option>
+                            <option value="🔴 혼잡 (대기 인원 많음)">🔴 혼잡 (대기 인원 많음)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card p-4 border-start border-5 border-danger mb-4">
+                <h5 class="fw-bold text-danger mb-3">🗺️ 유행병 및 사고 다발 구역 지도 관리 (승인 / 해제)</h5>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead><tr class="table-light"><th>상태 / 위치</th><th>구체적 장소</th><th>상황 보고 내역</th><th>구분</th><th>제보 학생</th><th>관리 Action</th></tr></thead>
+                        <tbody id="adminMapApprovalTable"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="card p-4">
+                <h5 class="fw-bold text-primary mb-3">🚑 실시간 전송 접수된 학생 자가진단 차트</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center align-middle">
+                        <thead class="table-dark"><tr><th>접수시각</th><th>학생명(학적)</th><th>신체정보 및 알레르기</th><th>스트레스</th><th>AI 판정</th><th>핵심 증상 호소</th></tr></thead>
+                        <tbody id="adminDashboardTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="sec-admin-inventory" class="content-section">
+            <h2 class="fw-bold mb-4">📦 보건실 의약품 마스터 데이터 재고 컨트롤</h2>
+            <div class="card p-4 bg-white"><div class="table-responsive"><table class="table table-hover align-middle text-center border-top"><thead><tr class="table-light"><th>약장 분류 카테고리</th><th>상비약 정식 명칭</th><th>현재 보유 수량</th><th>재고 증감 제어</th></tr></thead><tbody id="adminInventoryTable"></tbody></table></div></div>
+        </div>
+        
+        <div id="sec-profile" class="content-section">
+            <h2>👤 내 신체 건강 프로필 수정</h2>
+            <div class="card p-5 mt-4 col-lg-8" id="profileEditBox"><div class="row g-3 mb-4"><div class="col-md-6"><label class="form-label small text-muted fw-bold mb-1">학생 실명</label><input type="text" class="form-control" id="editName"></div><div class="col-md-6"><label class="form-label small text-muted fw-bold mb-1">비밀번호 변경</label><input type="password" class="form-control" id="editPw" placeholder="수정 시에만 입력"></div><div class="col-md-4"><label class="form-label small text-muted fw-bold mb-1">학년</label><input type="number" class="form-control" id="editGrade"></div><div class="col-md-4"><label class="form-label small text-muted fw-bold mb-1">반</label><input type="number" class="form-control" id="editClassNum"></div><div class="col-md-4"><label class="form-label small text-muted fw-bold mb-1">키(cm)</label><input type="number" class="form-control" id="editHeight"></div><div class="col-md-4"><label class="form-label small text-muted fw-bold mb-1">몸무게(kg)</label><input type="number" class="form-control" id="editWeight"></div><div class="col-md-8"><label class="form-label small text-muted fw-bold mb-1">기저 알레르기 원인 인자</label><input type="text" class="form-control" id="editAllergy"></div></div><button class="btn btn-success btn-lg mt-2 fw-bold rounded-pill shadow-sm" onclick="saveProfileData()">안전 프로필 저장하기</button></div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let db = { users: {}, currentSession: null, medicine: {}, adminConfig: {}, mapMarkers: [] };
+    let activeCaffeineList = [];
+    const floorImages = { 2: "shinfong_2f.png", 3: "shinfong_3f.png", 4: "shinfong_4f.png", 5: "shinfong_5f.png", 6: "shinfong_6f.png" };
+    let currentSelectedBuilding = ""; let currentSelectedFloor = 3;
+    let latestReportPayload = null;
+
+    const initialCategorizedMedicines = {
+        "🩺 두통 / 해열 / 통증 완화": { "타이레놀": 20, "이지엔6": 15, "탁센": 12, "미가펜": 8, "마그페롤": 10 },
+        "🤢 복통 / 급체 / 속쓰림 / 소화기계": { "훼스탈": 30, "트리메부틴": 20, "탈시드": 15, "알마겔정": 22, "포(제산제)": 18, "부스코핀": 14, "스타빅": 11, "정로환": 10, "메디락DS": 25, "까스앤 프리": 15 },
+        "💥 소염 / 타박상 / 근육 통증": { "리렉스펜": 12, "파네린": 10 },
+        "🤧 기침 / 콧물 / 감기 / 인후통": { "안티캄": 16, "콜대원": 25, "코푸시럽": 30, "스트렙실": 18, "코메키나": 12, "캐롤비": 14 },
+        "🩸 생리통 / 알레르기 / 기타 안과·구강": { "이니프록스": 15, "이부프로펜 400mg": 20, "지르텍": 12, "씨즈날": 14, "세티리진염산염": 18, "비피알레": 8, "마이로신": 7, "월로겔": 6, "이락실": 5 }
+    };
+
+    function handleSymptomLogic(isNone) {
+        const noneCb = document.getElementById('sym-none'); 
+        const symCbs = document.querySelectorAll('.diag-symptom');
+        const otherCb = document.getElementById('sym-other');
+        const otherInput = document.getElementById('sym-other-text');
+        
+        if(isNone && noneCb.checked) { 
+            symCbs.forEach(cb => cb.checked = false); 
+            otherCb.checked = false;
+            otherInput.style.display = 'none';
+            otherInput.value = '';
+        } else if(!isNone) { 
+            noneCb.checked = false; 
+        }
+    }
+
+    function toggleAuthCard(showLogin) {
+        document.getElementById('loginCard').style.display = showLogin ? 'block' : 'none';
+        document.getElementById('signupCard').style.display = showLogin ? 'none' : 'block';
+    }
+
+    function handleSignup() {
+        const id = document.getElementById('regId').value.trim();
+        const pw = document.getElementById('regPw').value;
+        const name = document.getElementById('regName').value.trim();
+        const role = document.getElementById('regRole').value;
+        if(!id || !pw || !name) { alert("계정 정보를 모두 입력해주세요."); return; }
+        if(db.users[id]) { alert("이미 존재하는 아이디입니다."); return; }
+        
+        db.users[id] = { 
+            password: pw, name: name, role: role, 
+            info: { 
+                grade: document.getElementById('regGrade').value, 
+                classNum: document.getElementById('regClassNum').value, 
+                height: document.getElementById('regHeight').value, 
+                weight: document.getElementById('regWeight').value, 
+                blood: document.getElementById('regBlood').value, 
+                allergy: document.getElementById('regAllergy').value,
+                notes: "없음"
+            }, 
+            history: [] 
+        }; 
+        saveDB(); 
+        alert("성공적으로 회원가입이 완료되었습니다! 발급받은 아이디로 로그인 해주세요."); 
+        toggleAuthCard(true);
+    }
+
+    window.onload = function() {
+        document.querySelectorAll('.diag-symptom').forEach(cb => {
+            cb.addEventListener('change', () => handleSymptomLogic(false));
+        });
+
+        if (!localStorage.getItem('school_health_db_v15')) {
+            db.users = {
+                "student1": { password: "123", name: "김이화", role: "student", info: { grade: 2, classNum: 3, height: 162, weight: 52, blood: "A형", allergy: "복숭아 알레르기", notes: "비염 유증상" }, history: []},
+                "admin": { password: "123", name: "보건교사", role: "admin" }
+            };
+            db.medicine = JSON.parse(JSON.stringify(initialCategorizedMedicines));
+            db.adminConfig = { congestion: "🟢 여유 (대기 없음)", liveRequests: [] };
+            db.mapMarkers = []; // 완전 초기화 (마커 제거)
+            
+            localStorage.setItem('school_health_db_v15', 'true');
+            saveDB();
+        } else { 
+            db = JSON.parse(localStorage.getItem('school_health_db')); 
+        }
+        checkSession();
+    }
+
+    function saveDB() { localStorage.setItem('school_health_db', JSON.stringify(db)); }
+    function quickLogin(uid) { document.getElementById('loginId').value = uid; document.getElementById('loginPw').value = "123"; handleLogin(); }
+    
+    function handleLogin() {
+        const id = document.getElementById('loginId').value.trim(); const pw = document.getElementById('loginPw').value;
+        if(db.users[id] && db.users[id].password === pw) { db.currentSession = { id: id, name: db.users[id].name, role: db.users[id].role }; saveDB(); checkSession(); } else { alert("로그인 비밀번호 불일치!"); }
+    }
+    function handleLogout() { db.currentSession = null; saveDB(); location.reload(); }
+
+    function checkSession() {
+        if(!db.currentSession) return;
+        document.getElementById('authContainer').setAttribute('style', 'display: none !important;');
+        document.getElementById('appContainer').setAttribute('style', 'display: flex !important;');
+        document.getElementById('userBadgeName').innerText = db.currentSession.name;
+        document.getElementById('userBadgeRole').innerText = db.currentSession.role==='admin'?'교사':'학생';
+        
+        if(db.currentSession.role === 'admin') {
+            document.getElementById('studentMenu').style.display = 'none'; document.getElementById('adminMenu').style.display = 'block'; switchSection('sec-admin-dash'); loadAdminDashboard(); loadAdminInventory();
+        } else {
+            document.getElementById('studentMenu').style.display = 'block'; document.getElementById('adminMenu').style.display = 'none'; switchSection('sec-diagnosis'); loadHistoryTable(); loadStudentInventory();
+        }
+        renderMapMarkers();
+    }
+
+    function switchSection(id, element) {
+        document.querySelectorAll('.content-section').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.menu-link').forEach(el => el.classList.remove('active'));
+        document.getElementById(id).classList.add('active'); if(element) element.classList.add('active');
+        if(id === 'sec-profile') { loadProfileForm(); }
+    }
+
+    function loadProfileForm() {
+        const user = db.users[db.currentSession.id]; const info = user.info || {};
+        document.getElementById('editName').value = user.name; document.getElementById('editGrade').value = info.grade||2; document.getElementById('editClassNum').value = info.classNum||3; document.getElementById('editHeight').value = info.height||162; document.getElementById('editWeight').value = info.weight||52; document.getElementById('editAllergy').value = info.allergy||"없음";
+    }
+    function saveProfileData() {
+        const uid = db.currentSession.id; db.users[uid].name = document.getElementById('editName').value;
+        db.users[uid].info.grade = document.getElementById('editGrade').value; db.users[uid].info.classNum = document.getElementById('editClassNum').value; db.users[uid].info.height = document.getElementById('editHeight').value; db.users[uid].info.weight = document.getElementById('editWeight').value; db.users[uid].info.allergy = document.getElementById('editAllergy').value; saveDB(); alert("안전하게 회원 정보가 저장되었습니다.");
+    }
+
+    function addCaffeineRow() {
+        const type = document.getElementById('caffeineType').value; const count = parseInt(document.getElementById('caffeineCount').value);
+        if(count > 0) { activeCaffeineList.push({ type: type, count: count }); renderCaffeineBadges(); }
+    }
+    function renderCaffeineBadges() {
+        const box = document.getElementById('caffeineBadgesContainer'); box.innerHTML = '';
+        activeCaffeineList.forEach((item, i) => { box.innerHTML += `<span class="badge bg-secondary p-2 rounded-pill fs-6">${item.type} x ${item.count}잔 <i class="bi bi-x-circle text-white ms-1" style="cursor:pointer" onclick="activeCaffeineList.splice(${i},1); renderCaffeineBadges();"></i></span>`; });
+    }
+
+    function processDiagnosis() {
+        try {
+            let score = 10; let report = []; let recommendedMeds = new Set();
+            let totalCaf = 0; activeCaffeineList.forEach(item => totalCaf += item.count);
+            
+            if(totalCaf > 0) { score += (totalCaf * 25); report.push(`<li>☕ <strong>카페인 과잉 경고:</strong> 오늘 총 ${totalCaf}잔의 각성 카페인을 섭취해 중추신경계 흥분 및 심박수 상승이 관찰됩니다. 충분한 수분을 섭취하세요.</li>`); }
+            else { report.push(`<li>☕ <strong>카페인 프리:</strong> 고카페인 음료 복용 내역이 없어 생체 리듬 흐름이 매우 안정적입니다.</li>`); }
+
+            const sleepStart = document.getElementById('diagSleepStart').value; const sleepEnd = document.getElementById('diagSleepEnd').value; let sleepDuration = 7;
+            if(sleepStart && sleepEnd) { let [h1, m1] = sleepStart.split(':').map(Number); let [h2, m2] = sleepEnd.split(':').map(Number); let d1 = new Date(2000, 0, 1, h1, m1); let d2 = new Date(2000, 0, (h2 < h1 ? 2 : 1), h2, m2); sleepDuration = (d2 - d1) / (1000 * 60 * 60); }
+            if(sleepDuration < 5) { score += 35; report.push(`<li>🛏️ <strong>수면 박탈 위험:</strong> 총 숙면시간이 ${sleepDuration.toFixed(1)}시간으로 매우 부족합니다. 면역력 저하가 촉발될 수 있으니 오늘 밤은 일찍 취침하세요.</li>`); }
+
+            const symptomToCat = {
+                "두통": "두통", "복통/소화불량": "복통", "발열/오한": "해열", "근육통/관절통": "근육", "생리통": "생리통", "인후통/기침": "기침", "어지러움": "두통" 
+            };
+
+            let symptoms = []; 
+            document.querySelectorAll('.diag-symptom:checked').forEach(cb => { 
+                symptoms.push(cb.value); score += 25; 
+                
+                let keyword = symptomToCat[cb.value];
+                if (keyword) {
+                    for (let cat in db.medicine) {
+                        if (cat.includes(keyword)) {
+                            for (let medName in db.medicine[cat]) {
+                                if (db.medicine[cat][medName] > 0) { 
+                                    recommendedMeds.add(medName);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            const isOther = document.getElementById('sym-other').checked;
+            const otherText = document.getElementById('sym-other-text').value.trim();
+            if(isOther && otherText) { symptoms.push(`기타(${otherText})`); score += 20; }
+
+            if(symptoms.length > 0) { 
+                report.push(`<li>🤒 <strong>자각 이상 징후:</strong> 현재 [${symptoms.join(', ')}] 증상 발현으로 기저 스트레스 수치가 고도로 가중 처리되었습니다. 무리한 체육활동은 삼가세요.</li>`); 
+                
+                if(recommendedMeds.size > 0) {
+                    const medArray = Array.from(recommendedMeds).slice(0, 5); 
+                    report.push(`<li class="mt-3 p-3 rounded-4 shadow-sm border border-success" style="background:#f4fcf7;"><i class="bi bi-capsule-pill text-success fs-5 me-2"></i><strong class="text-dark">AI 맞춤 보건실 상비약 추천:</strong><br>선택하신 증상을 완화하기 위해 보건실에 현재 재고가 있는 <strong class="text-danger">[ ${medArray.join(', ')} ]</strong> 의약품 중 하나를 선생님께 불출받아 복용하는 것을 권장합니다.</li>`);
+                } else {
+                    report.push(`<li class="mt-3 p-3 rounded-4 shadow-sm border border-warning" style="background:#fffcf4;"><i class="bi bi-capsule-pill text-warning fs-5 me-2"></i><strong class="text-dark">약품 매칭 실패:</strong> 증상에 맞는 상비약의 보건실 재고가 부족합니다. 보건선생님과 직접 상담해 주세요.</li>`);
+                }
+            }
+
+            const finalStress = Math.min(score, 100);
+            let sev = "양호 (자가 관리 가능)", act = "보건실 비방문 교실 내 가벼운 수분 섭취 및 자가 대기 관리 지침 하달", aClass = "alert-success";
+            if(finalStress >= 65 || symptoms.length >= 2) { sev = "🔴 위험 (의료기관 이송)"; act = "🚨 보호자 연락 후 신속한 학교 외부 전문병원 진료 및 긴급 이송을 권고합니다."; aClass = "alert-danger"; }
+            else if(finalStress >= 40 || symptoms.length >= 1) { sev = "🟡 주의 (보건실 안정을 권고)"; act = "⚠️ 교실에 무리하게 대기하지 마시고, 즉시 보건실에 내방하여 추천받은 상비약을 수령하고 침상 안정을 취하세요."; aClass = "alert-warning"; }
+
+            document.getElementById('diagnosisResultBox').style.display = 'block';
+            document.getElementById('mainAlertBox').className = `alert p-4 border-0`;
+            
+            const pBar = document.getElementById('stressProgressBar');
+            pBar.style.width = `${finalStress}%`; pBar.innerText = `${finalStress}%`;
+            pBar.className = `progress-bar progress-bar-striped progress-bar-animated bg-${finalStress>=65?'danger':(finalStress>=40?'warning':'success')}`;
+            
+            document.getElementById('resSeverity').innerText = sev;
+            document.getElementById('resAction').innerText = act;
+            document.getElementById('detailedReportList').innerHTML = report.join('');
+
+            const uid = db.currentSession.id; const dateStr = `${new Date().getMonth()+1}/${new Date().getDate()} 진단`;
+            latestReportPayload = { name: db.users[uid].name, gradeClass: `2학년 3반`, info: db.users[uid].info, stress: finalStress, severity: sev, symptoms: symptoms.join(', ')||'기저 피로 상태', time: dateStr };
+            db.users[uid].history.unshift({ date: dateStr, stress: finalStress, severity: sev, action: symptoms.join(', ')||'정상 범위' });
+            saveDB(); loadHistoryTable();
+        } catch(err) { console.error(err); alert("자가진단 분석 보고서 로딩 중 문제가 발생했습니다. 관리자에게 문의하세요."); }
+    }
+
+    function sendToAdminDashboard() {
+        if(!latestReportPayload) return; db.adminConfig.liveRequests.unshift(latestReportPayload); saveDB();
+        alert("🚑 [원격 전송 완료] 자가진단 차트 데이터가 선생님용 대시보드로 실시간 전달 승인되었습니다. 보건실로 안전하게 이동해 주세요.");
+    }
+    
+    function loadHistoryTable() {
+        const tbody = document.getElementById('historyTableBody'); tbody.innerHTML = '';
+        (db.users[db.currentSession.id].history || []).forEach(h => { tbody.innerHTML += `<tr><td><small class='text-muted fw-bold'>${h.date}</small></td><td><strong class="fs-6">${h.stress}점</strong></td><td><span class='badge bg-secondary rounded-pill'>${h.severity}</span></td><td class="fw-bold text-dark">${h.action}</td></tr>`; });
+    }
+    
+    function loadStudentInventory() {
+        const congestionBox = document.getElementById('userCongestionBox');
+        if(congestionBox) {
+            congestionBox.innerHTML = `<span class="fw-bold"><i class="bi bi-people-fill me-2"></i>보건실 혼잡도:</span> <span class="badge bg-light text-dark fs-6 rounded-pill px-3 py-2 shadow-sm">${db.adminConfig.congestion}</span>`;
+        }
+        
+        const container = document.getElementById('studentMedGridContainer'); container.innerHTML = '';
+        for (const [cat, items] of Object.entries(db.medicine)) {
+            let html = `<div class="col-md-6 col-xl-4"><div class="card med-category-card p-4"><h5 class="fw-bold text-primary border-bottom pb-3 mb-3">${cat}</h5>`;
+            for(const [name, count] of Object.entries(items)) { html += `<div class="med-item-row"><span>${name}</span><span class="badge rounded-pill ${count>5?'bg-success':'bg-danger'}">${count}개 잔여</span></div>`; }
+            html += `</div></div>`; container.innerHTML += html;
+        }
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('chatInput'); const text = input.value.trim(); if(!text) return;
+        const box = document.getElementById('chatBox'); box.innerHTML += `<div class="msg user">${text}</div>`; input.value = '';
+        setTimeout(() => {
+            let reply = "이화여고 비밀 상담 챗봇입니다. 생리 연장 확률, 다이어트 무월경 부작용, 성교육 상식 키워드를 적어 주시면 처방 연산을 시행합니다.";
+            if(text.includes('생리') && (text.includes('안') || text.includes('미뤄'))) {
+                reply = `🩺 <strong>[생리 지연 시상하부 차단 확률 예측 리포트]</strong><br>현재 입력하신 누적 스트레스 계수와 코르티솔 호르몬 추이를 결합 분석한 결과, 부신 피질 호르몬 폭증으로 인한 생리 주기 미뤄짐 유발 확률은 현재 <strong>87% 이상으로 매우 지배적</strong>입니다.<br><br><strong>🌸 AI 추천 실천책:</strong><br>- 자궁 내막 혈행을 원활히 하기 위해 하루 25분 온찜질 팩을 수시로 얹어주세요.<br>- 무리한 굶기식 다이어트 단식을 즉시 멈추지 않으면 조기 폐경급 무월경 증세가 만성화될 위험이 큽니다.`;
+            } else if(text.includes('피임') || text.includes('성')) {
+                reply = `🛡️ <strong>[시크릿 성 건강 콘돔 차단 피임법 상담]</strong><br>말 못 할 청소년기 성 고민을 공유해 주어 고마워요. 기록은 절대 남지 않습니다.<br><br>1. <strong>피임 성공률 98%:</strong> 올바른 콘돔 사용만이 가위바위보식 질외사정 실패율을 방어하고 교차 성병 감염을 100% 차단해 줍니다.<br>2. <strong>사후피임약(긴급피임약):</strong> 관계 후 뒤늦게 복용하는 고농도 호르몬제는 부정출혈 및 생리 리듬 영구 파괴 부작용이 크므로 오남용하면 절대 안 되며 산부인과 처방 서류가 필수입니다.`;
+            }
+            box.innerHTML += `<div class="msg bot">${reply}</div>`; box.scrollTop = box.scrollHeight;
+        }, 400);
+    }
+
+    function openBuildingDetails(name, eventObj) {
+        if(eventObj) eventObj.stopPropagation(); 
+        currentSelectedBuilding = name;
+        document.getElementById('selectedBuildingName').innerText = name;
+        document.getElementById('buildingDetailContainer').style.display = 'block';
+        selectFloor(3); 
+    }
+    
+    function selectFloor(f) {
+        currentSelectedFloor = f; 
+        
+        const textPlaceholder = document.getElementById('placeholderFloorText');
+        if(textPlaceholder) { textPlaceholder.innerText = f; }
+        
+        const box = document.getElementById('floorMapBox');
+        for(let i=2; i<=6; i++) { 
+            let btn = document.getElementById(`btn-fl-${i}`); if(btn) btn.classList.remove('active'); 
+        }
+        let activeBtn = document.getElementById(`btn-fl-${f}`); if(activeBtn) activeBtn.classList.add('active');
+        
+        box.style.backgroundImage = `url('./${floorImages[f]}')`;
+        let img = new Image(); img.src = `./${floorImages[f]}`;
+        img.onload = function() { document.getElementById('floorMapPlaceholder').style.display = 'none'; };
+        img.onerror = function() { document.getElementById('floorMapPlaceholder').style.display = 'block'; box.style.backgroundImage = 'none'; };
+        renderMapMarkers();
+    }
+    
+    function handleMapClick(e) { 
+        if (e.target.classList.contains('danger-spot') || e.target.classList.contains('school-icon-btn')) return;
+        createMarkerData('전체', 0, e.currentTarget, e); 
+    }
+    
+    function handleFloorMapClick(e) { 
+        if(e.target.classList.contains('danger-spot')) return; 
+        createMarkerData(currentSelectedBuilding, currentSelectedFloor, e.currentTarget, e); 
+    }
+    
+    function createMarkerData(b, f, el, e) {
+        let r = el.getBoundingClientRect(); 
+        let x = ((e.clientX - r.left) / r.width) * 100; 
+        let y = ((e.clientY - r.top) / r.height) * 100;
+        
+        let title = prompt("📍 역학조사 위치 제보:\n전염성 유행병 발병 호실이나 안전사고 상세 위치를 입력하세요.\n(예: 3층 중앙 계단, 3층 과학실 안쪽 실험대 앞)"); if(!title) return;
+        let desc = prompt("🚨 제보 상세 내용 기술:\n(예: 빗물 고임으로 계단 미끄러짐 낙상 및 손목 골절 / A형 독감 확진 환자 밀집 유행 구역)"); if(!desc) return;
+        let isD = confirm("감염병 유행 제보인가요?\n[확인] 누름 = 감염병 확산구역(노란점 마킹)\n[취소] 누름 = 안전사고 부상구역(빨간점 마킹)");
+        
+        let currentStatus = (db.currentSession.role === 'admin') ? 'approved' : 'pending';
+        
+        db.mapMarkers.push({ id: Date.now(), x:x, y:y, title:title, desc:desc, type: isD?'warning':'danger', status: currentStatus, author:db.currentSession.name, building:b, floor:f });
+        saveDB(); 
+        
+        if (currentStatus === 'pending') {
+            alert("✅ 보건선생님께 마커 등록 승인이 요청되었습니다. 승인 후 지도에 표시됩니다.");
+        } else {
+            renderMapMarkers(); 
+            loadAdminDashboard();
+        }
+    }
+    
+    function renderMapMarkers() {
+        const m = document.getElementById('mapMarkersContainer'); const fl = document.getElementById('floorMarkersContainer');
+        m.innerHTML = ''; fl.innerHTML = '';
+        
+        let approvedMarkers = db.mapMarkers.filter(item => item.status === 'approved');
+        
+        approvedMarkers.forEach((item, i) => {
+            let div = document.createElement('div'); div.className = `danger-spot bg-${item.type} ${item.type==='warning'?'text-dark':''}`;
+            div.style.left = `${item.x}%`; div.style.top = `${item.y}%`; div.innerText = i+1;
+            div.onclick = function(e) { 
+                e.stopPropagation(); 
+                document.getElementById('mapDetailBox').style.display='block'; 
+                // 💡 [버그 완벽 수정] 제보자 이름으로 문구 정상 노출!
+                document.getElementById('mapDetailText').innerHTML=`<strong>📍 제보 지역 소속:</strong> ${item.building} ${item.floor===0?'':item.floor+'층'} - ${item.title}<br><strong>⚠️ 긴급 위기 정황:</strong> <span class='text-danger fw-bold'>${item.desc}</span> <small class='text-muted'>(제보자: ${item.author} | 👨‍⚕️ 보건교사 승인 완료)</small>`; 
+            };
+            if(item.building==='전체') m.appendChild(div); else if(item.building===currentSelectedBuilding && item.floor===currentSelectedFloor) fl.appendChild(div);
+        });
+    }
+
+    // 💡 [관리자 마커 승인 및 삭제(상황 해제) 기능 완벽 추가]
+    function loadAdminDashboard() {
+        const tbody = document.getElementById('adminDashboardTable'); tbody.innerHTML = '';
+        (db.adminConfig.liveRequests || []).forEach(r => { tbody.innerHTML += `<tr><td><span class='badge bg-light text-dark'>${r.time}</span></td><td class="fw-bold text-success">${r.name}</td><td class='small fw-bold'>알레르기: <span class='text-danger'>${r.info.allergy}</span></td><td><strong class="fs-6">${r.stress}점</strong></td><td><span class="badge bg-warning text-dark">${r.severity}</span></td><td class="text-danger fw-bold text-start small">${r.symptoms}</td></tr>`; });
+        
+        const mapTbody = document.getElementById('adminMapApprovalTable'); 
+        mapTbody.innerHTML = '';
+        
+        if(db.mapMarkers.length === 0) {
+            mapTbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">등록되거나 대기 중인 제보가 없습니다.</td></tr>`;
+        } else {
+            // 💡 승인 대기(pending)가 위로, 활성(approved) 마커가 아래로 오도록 정렬
+            let sortedMarkers = [...db.mapMarkers].sort((a, b) => {
+                if (a.status === 'pending' && b.status === 'approved') return -1;
+                if (a.status === 'approved' && b.status === 'pending') return 1;
+                return b.id - a.id; 
+            });
+
+            sortedMarkers.forEach(m => {
+                let scope = m.building === '전체' ? '야외 공간' : `${m.building} (${m.floor}F)`;
+                let statusBadge = m.status === 'pending' ? '<span class="badge bg-danger">승인 대기</span>' : '<span class="badge bg-success">지도 표시중</span>';
+                
+                // 💡 승인 대기일 때는 [승인/반려], 이미 승인된 마커는 [지도에서 삭제] 버튼 표출!
+                let actionBtns = m.status === 'pending' 
+                    ? `<button class="btn btn-sm btn-success fw-bold rounded-pill" onclick="approveMarker(${m.id})">승인</button> <button class="btn btn-sm btn-danger fw-bold rounded-pill" onclick="rejectMarker(${m.id})">반려</button>`
+                    : `<button class="btn btn-sm btn-outline-danger fw-bold rounded-pill" onclick="deleteMarker(${m.id})">지도에서 삭제</button>`;
+
+                mapTbody.innerHTML += `<tr>
+                    <td><strong>${scope}</strong><br>${statusBadge}</td>
+                    <td>${m.title}</td>
+                    <td>${m.desc}</td>
+                    <td><span class="badge bg-${m.type}">${m.type==='warning'?'유행병':'안전사고'}</span></td>
+                    <td>${m.author}</td>
+                    <td>${actionBtns}</td>
+                </tr>`;
+            });
+        }
+    }
+    
+    function approveMarker(id) { 
+        let marker = db.mapMarkers.find(m => m.id === id); 
+        if(marker) marker.status = 'approved'; 
+        saveDB(); loadAdminDashboard(); renderMapMarkers(); 
+        alert("해당 제보가 승인되어 전체 지도에 표시됩니다."); 
+    }
+    
+    function rejectMarker(id) { 
+        db.mapMarkers = db.mapMarkers.filter(m => m.id !== id); 
+        saveDB(); loadAdminDashboard(); renderMapMarkers(); 
+        alert("제보가 반려 및 폐기 되었습니다."); 
+    }
+
+    // 💡 [요구사항 해결!] 승인된 마커를 지도에서 완전히 삭제하는 함수 추가
+    function deleteMarker(id) {
+        if(confirm("안전/질병 상황이 해제되었습니까? 이 마커를 지도에서 완전히 삭제합니다.")) {
+            db.mapMarkers = db.mapMarkers.filter(m => m.id !== id);
+            saveDB(); loadAdminDashboard(); renderMapMarkers();
+            alert("지도에서 성공적으로 삭제되었습니다.");
+        }
+    }
+    
+    function loadAdminInventory() {
+        const tbody = document.getElementById('adminInventoryTable'); tbody.innerHTML = '';
+        for (const [cat, items] of Object.entries(db.medicine)) {
+            for(const [name, count] of Object.entries(items)) {
+                tbody.innerHTML += `<tr>
+                    <td><span class='badge bg-secondary rounded-pill'>${cat.split('/')[0]}</span></td>
+                    <td class="fw-bold">${name}</td>
+                    <td><span class='badge ${count>5?'bg-dark':'bg-danger'} fs-6 rounded-pill'>${count}개</span></td>
+                    <td>
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-sm btn-outline-danger px-3 py-1 fw-bold" style="border-top-left-radius: 20px; border-bottom-left-radius: 20px;" onclick="db.medicine['${cat}']['${name}'] = Math.max(0, db.medicine['${cat}']['${name}'] - 1); saveDB(); loadAdminInventory();">-1</button>
+                            <button class="btn btn-sm btn-outline-success px-3 py-1 fw-bold" style="border-top-right-radius: 20px; border-bottom-right-radius: 20px;" onclick="db.medicine['${cat}']['${name}']++; saveDB(); loadAdminInventory();">+1</button>
+                        </div>
+                    </td>
+                </tr>`;
+            }
+        }
+    }
+    
+    function changeCongestion(v) { db.adminConfig.congestion = v; saveDB(); }
+</script>
+</body>
+</html>
